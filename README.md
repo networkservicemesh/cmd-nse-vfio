@@ -1,3 +1,33 @@
+# Intro
+
+This repo contains 'cmd-nse-vfio' a VFIO NSE application for Network Service Mesh. It provides `Network Service -> {
+MAC Address, VLAN tag }` mappings for the list of registered Network Services.
+
+This README will provide directions for building, testing, and debugging that container.
+
+# Usage
+
+`cmd-nse-vfio` accept following environment variables:
+
+* NSE_NAME - A string value of network service endpoint name (default "vfio-server")
+* NSE_BASE_DIR - A base directory to create a unix socker for listening incoming requests (default "./")
+* NSE_CONNECT_TO - A Network service Manager connectTo URL (default "unix:///var/lib/networkservicemesh/nsm.io.sock")
+* NSE_MAX_TOKEN_LIFETIME - A token lifetime duration (default 24h)
+* NSE_SERVICES - A list of supported Network Services in inner format:
+    Name@Domain: { addr: MACAddr; vlan: VLANTag; labels: Labels; }
+    MACAddr = xx:xx:xx:xx:xx:xx
+    Labels = label_1=value_1&label_2=value_2
+        - Name - a Network Service name
+        - Domain - a Network Service domain (don't confuse it with interdomain domains)
+        - MACAddr - a MAC address for the Network Service
+        - VLANTag - a VLAN tag for the Network Service
+        - labelN=valueN - pairs of labels supported by the Network Service
+    - Examples:
+        - pingpong@worker.domain: { addr: 0a:55:44:33:22:11 }
+            - **pingpong** Network Service
+            - **worker.domain** Network Service domain
+            - **0a:55:44:33:22:11** MAC address
+
 # Build
 
 ## Build cmd binary locally

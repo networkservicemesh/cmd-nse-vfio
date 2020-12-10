@@ -14,6 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package mapserver provides chain element implementing `network service -> { MAC, VLAN }` mapping
 package mapserver
 
 import (
@@ -21,9 +22,10 @@ import (
 	"net"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/pkg/errors"
+
 	"github.com/networkservicemesh/api/pkg/api/networkservice"
 	"github.com/networkservicemesh/sdk/pkg/networkservice/core/next"
-	"github.com/pkg/errors"
 
 	"github.com/networkservicemesh/cmd-nse-vfio/internal/config"
 )
@@ -37,6 +39,7 @@ type entry struct {
 	vlanTag int32
 }
 
+// NewServer returns a new `network service -> { MAC, VLAN }` mapping server chain element
 func NewServer(cfg *config.Config) networkservice.NetworkServiceServer {
 	s := &mapServer{
 		entries: make(map[string]*entry, len(cfg.Services)),

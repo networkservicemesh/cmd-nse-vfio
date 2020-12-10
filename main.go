@@ -182,7 +182,7 @@ func main() {
 	nsRegistryClient := registry.NewNetworkServiceRegistryClient(cc)
 	for i := range cfg.Services {
 		nsName := cfg.Services[i].Name
-		if _, err := nsRegistryClient.Register(ctx, &registry.NetworkService{
+		if _, err = nsRegistryClient.Register(ctx, &registry.NetworkService{
 			Name:    nsName,
 			Payload: payload.Ethernet,
 		}); err != nil {

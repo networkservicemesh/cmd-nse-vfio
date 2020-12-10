@@ -14,6 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package config provides methods to get configuration parameters from environment variables
 package config
 
 import (

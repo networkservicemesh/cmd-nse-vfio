@@ -14,7 +14,6 @@ import (
 	_ "github.com/networkservicemesh/api/pkg/api/networkservice/mechanisms/noop"
 	_ "github.com/networkservicemesh/api/pkg/api/networkservice/payload"
 	_ "github.com/networkservicemesh/api/pkg/api/registry"
-	_ "github.com/networkservicemesh/integration-k8s-packet/cmd/vfio-nse/internal/config"
 	_ "github.com/networkservicemesh/sdk/pkg/networkservice/chains/endpoint"
 	_ "github.com/networkservicemesh/sdk/pkg/networkservice/common/authorize"
 	_ "github.com/networkservicemesh/sdk/pkg/networkservice/common/mechanisms"

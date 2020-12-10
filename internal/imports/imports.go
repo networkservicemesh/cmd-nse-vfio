@@ -19,8 +19,6 @@ import (
 	_ "github.com/networkservicemesh/sdk/pkg/networkservice/common/mechanisms"
 	_ "github.com/networkservicemesh/sdk/pkg/networkservice/core/next"
 	_ "github.com/networkservicemesh/sdk/pkg/registry/common/expire"
-	_ "github.com/networkservicemesh/sdk/pkg/registry/common/recvfd"
-	_ "github.com/networkservicemesh/sdk/pkg/registry/common/sendfd"
 	_ "github.com/networkservicemesh/sdk/pkg/registry/common/setid"
 	_ "github.com/networkservicemesh/sdk/pkg/registry/core/adapters"
 	_ "github.com/networkservicemesh/sdk/pkg/registry/core/chain"

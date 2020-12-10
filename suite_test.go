@@ -29,7 +29,7 @@ import (
 	"github.com/networkservicemesh/cmd-nse-vfio/internal/config"
 )
 
-type ForwarderTestSuite struct {
+type TestSuite struct {
 	suite.Suite
 	ctx        context.Context
 	cancel     context.CancelFunc
@@ -42,5 +42,5 @@ type ForwarderTestSuite struct {
 }
 
 func TestForwarderTestSuite(t *testing.T) {
-	suite.Run(t, new(ForwarderTestSuite))
+	suite.Run(t, new(TestSuite))
 }

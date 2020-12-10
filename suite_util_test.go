@@ -26,7 +26,7 @@ import (
 	"github.com/networkservicemesh/sdk/pkg/tools/grpcutils"
 )
 
-func (f *ForwarderTestSuite) ListenAndServe(ctx context.Context, server *grpc.Server) <-chan error {
+func (f *TestSuite) ListenAndServe(ctx context.Context, server *grpc.Server) <-chan error {
 	errCh := grpcutils.ListenAndServe(ctx, &f.config.ConnectTo, server)
 	select {
 	case err, ok := <-errCh:

@@ -29,7 +29,7 @@ const (
 	contextTimeout = 20 * time.Second
 )
 
-func (f *ForwarderTestSuite) TestHealthCheck() {
+func (f *TestSuite) TestHealthCheck() {
 	ctx, cancel := context.WithTimeout(f.ctx, contextTimeout)
 	defer cancel()
 

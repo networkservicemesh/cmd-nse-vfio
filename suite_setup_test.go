@@ -45,7 +45,7 @@ import (
 	"github.com/networkservicemesh/sdk/pkg/tools/spire"
 )
 
-func (f *ForwarderTestSuite) SetupSuite() {
+func (f *TestSuite) SetupSuite() {
 	logrus.SetFormatter(&nested.Formatter{})
 	logrus.SetLevel(logrus.TraceLevel)
 	f.ctx, f.cancel = context.WithCancel(context.Background())
@@ -65,7 +65,7 @@ func (f *ForwarderTestSuite) SetupSuite() {
 	f.Require().NoError(err)
 	f.spireErrCh = spire.Start(
 		spire.WithContext(f.ctx),
-		spire.WithEntry("spiffe://example.org/forwarder", "unix:path:/bin/forwarder"),
+		spire.WithEntry("spiffe://example.org/app", "unix:path:/bin/app"),
 		spire.WithEntry(fmt.Sprintf("spiffe://example.org/%s", filepath.Base(executable)),
 			fmt.Sprintf("unix:path:%s", executable),
 		),
@@ -128,6 +128,7 @@ func (f *ForwarderTestSuite) SetupSuite() {
 	}
 	recv, err := adapters.NetworkServiceEndpointServerToClient(memrg).Find(ctx, &registry.NetworkServiceEndpointQuery{
 		NetworkServiceEndpoint: &registry.NetworkServiceEndpoint{
+			Name:                f.config.Name,
 			NetworkServiceNames: nsNames,
 		},
 		Watch: true,
@@ -155,7 +156,7 @@ func (f *ForwarderTestSuite) SetupSuite() {
 	// ********************************************************************************
 }
 
-func (f *ForwarderTestSuite) TearDownSuite() {
+func (f *TestSuite) TearDownSuite() {
 	f.cancel()
 	for {
 		_, ok := <-f.sutErrCh

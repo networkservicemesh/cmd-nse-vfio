@@ -169,3 +169,12 @@ issues:
   exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
+  exclude-rules:
+    - path: main.go
+      linters:
+        - funlen
+      text: "Function 'main' has too many statements"
+    - path: suite_setup_test.go
+      linters:
+        - funlen
+      text: "Function 'SetupSuite' is too long"

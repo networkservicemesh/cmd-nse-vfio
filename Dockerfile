@@ -23,5 +23,4 @@ CMD dlv -l :40000 --headless=true --api-version=2 test -test.v ./...
 
 FROM alpine as runtime
 COPY --from=build /bin/app /bin/app
-COPY --from=build /bin/dlv /bin/dlv
 CMD /bin/app

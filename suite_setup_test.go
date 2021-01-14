@@ -1,5 +1,6 @@
-// Copyright (c) 2020 Doc.ai and/or its affiliates.
-// Copyright (c) 2020 Cisco and/or its affiliates.
+// Copyright (c) 2020-2021 Doc.ai and/or its affiliates.
+//
+// Copyright (c) 2020-2021 Cisco and/or its affiliates.
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -27,7 +28,6 @@ import (
 	nested "github.com/antonfisher/nested-logrus-formatter"
 	"github.com/edwarnicke/exechelper"
 	"github.com/edwarnicke/grpcfd"
-	"github.com/kelseyhightower/envconfig"
 	"github.com/sirupsen/logrus"
 	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
@@ -56,7 +56,7 @@ func (f *TestSuite) SetupSuite() {
 	// ********************************************************************************
 	log.Entry(f.ctx).Infof("Getting Config from Env (time since start: %s)", time.Since(starttime))
 	// ********************************************************************************
-	f.Require().NoError(envconfig.Process("nsm", &f.config))
+	f.Require().NoError(f.config.Process())
 
 	// ********************************************************************************
 	log.Entry(f.ctx).Infof("Running Spire (time since start: %s)", time.Since(starttime))
@@ -115,6 +115,7 @@ func (f *TestSuite) SetupSuite() {
 	server := grpc.NewServer(grpc.Creds(serverCreds))
 
 	registry.RegisterNetworkServiceEndpointRegistryServer(server, registryServer)
+	registry.RegisterNetworkServiceRegistryServer(server, memory.NewNetworkServiceRegistryServer())
 	ctx, cancel := context.WithCancel(f.ctx)
 	defer func(cancel context.CancelFunc, serverErrCh <-chan error) {
 		cancel()
@@ -122,14 +123,9 @@ func (f *TestSuite) SetupSuite() {
 		f.Require().NoError(err)
 	}(cancel, f.ListenAndServe(ctx, server))
 
-	var nsNames []string
-	for i := range f.config.Services {
-		nsNames = append(nsNames, f.config.Services[i].Name)
-	}
 	recv, err := adapters.NetworkServiceEndpointServerToClient(memrg).Find(ctx, &registry.NetworkServiceEndpointQuery{
 		NetworkServiceEndpoint: &registry.NetworkServiceEndpoint{
-			Name:                f.config.Name,
-			NetworkServiceNames: nsNames,
+			Name: f.config.Name,
 		},
 		Watch: true,
 	})

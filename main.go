@@ -48,8 +48,8 @@ import (
 	"github.com/networkservicemesh/sdk/pkg/tools/debug"
 	"github.com/networkservicemesh/sdk/pkg/tools/grpcutils"
 	"github.com/networkservicemesh/sdk/pkg/tools/jaeger"
-	"github.com/networkservicemesh/sdk/pkg/tools/logger"
-	"github.com/networkservicemesh/sdk/pkg/tools/logger/logruslogger"
+	"github.com/networkservicemesh/sdk/pkg/tools/log"
+	"github.com/networkservicemesh/sdk/pkg/tools/log/logruslogger"
 	"github.com/networkservicemesh/sdk/pkg/tools/opentracing"
 	"github.com/networkservicemesh/sdk/pkg/tools/signalctx"
 	"github.com/networkservicemesh/sdk/pkg/tools/spiffejwt"
@@ -73,45 +73,44 @@ func main() {
 	// setup logging
 	// ********************************************************************************
 	logrus.SetFormatter(&nested.Formatter{})
-	ctx, _ = logruslogger.New(
-		logger.WithFields(ctx, map[string]interface{}{"cmd": os.Args[0]}),
-	)
+	ctx = log.WithFields(ctx, map[string]interface{}{"cmd": os.Args[0]})
+	ctx = log.WithLog(ctx, logruslogger.New(ctx))
 
 	if err := debug.Self(); err != nil {
-		logger.Log(ctx).Infof("%s", err)
+		log.FromContext(ctx).Infof("%s", err)
 	}
 
 	// ********************************************************************************
 	// Configure open tracing
 	// ********************************************************************************
-	logger.EnableTracing(true)
-	jaegerCloser := jaeger.InitJaeger("cmd-nse-vfio")
+	log.EnableTracing(true)
+	jaegerCloser := jaeger.InitJaeger(ctx, "cmd-nse-vfio")
 	defer func() { _ = jaegerCloser.Close() }()
 
 	// enumerating phases
-	logger.Log(ctx).Infof("there are 5 phases which will be executed followed by a success message:")
-	logger.Log(ctx).Infof("the phases include:")
-	logger.Log(ctx).Infof("1: get config from environment")
-	logger.Log(ctx).Infof("2: retrieve spiffe svid")
-	logger.Log(ctx).Infof("3: create vfio server nse")
-	logger.Log(ctx).Infof("4: create grpc and mount nse")
-	logger.Log(ctx).Infof("5: register nse with nsm")
-	logger.Log(ctx).Infof("a final success message with start time duration")
+	log.FromContext(ctx).Infof("there are 5 phases which will be executed followed by a success message:")
+	log.FromContext(ctx).Infof("the phases include:")
+	log.FromContext(ctx).Infof("1: get config from environment")
+	log.FromContext(ctx).Infof("2: retrieve spiffe svid")
+	log.FromContext(ctx).Infof("3: create vfio server nse")
+	log.FromContext(ctx).Infof("4: create grpc and mount nse")
+	log.FromContext(ctx).Infof("5: register nse with nsm")
+	log.FromContext(ctx).Infof("a final success message with start time duration")
 
 	starttime := time.Now()
 
 	// ********************************************************************************
-	logger.Log(ctx).Infof("executing phase 1: get config from environment")
+	log.FromContext(ctx).Infof("executing phase 1: get config from environment")
 	// ********************************************************************************
 	cfg := new(config.Config)
 	if err := cfg.Process(); err != nil {
 		logrus.Fatal(err.Error())
 	}
 
-	logger.Log(ctx).Infof("Config: %#v", cfg)
+	log.FromContext(ctx).Infof("Config: %#v", cfg)
 
 	// ********************************************************************************
-	logger.Log(ctx).Infof("executing phase 2: retrieving svid, check spire agent logs if this is the last line you see")
+	log.FromContext(ctx).Infof("executing phase 2: retrieving svid, check spire agent logs if this is the last line you see")
 	// ********************************************************************************
 	source, err := workloadapi.NewX509Source(ctx)
 	if err != nil {
@@ -121,10 +120,10 @@ func main() {
 	if err != nil {
 		logrus.Fatalf("error getting x509 svid: %+v", err)
 	}
-	logger.Log(ctx).Infof("SVID: %q", svid.ID)
+	log.FromContext(ctx).Infof("SVID: %q", svid.ID)
 
 	// ********************************************************************************
-	logger.Log(ctx).Infof("executing phase 3: create vfio-server network service endpoint")
+	log.FromContext(ctx).Infof("executing phase 3: create vfio-server network service endpoint")
 	// ********************************************************************************
 	responderEndpoint := endpoint.NewServer(
 		ctx,
@@ -136,7 +135,7 @@ func main() {
 		}))
 
 	// ********************************************************************************
-	logger.Log(ctx).Infof("executing phase 4: create grpc server and register vfio-server")
+	log.FromContext(ctx).Infof("executing phase 4: create grpc server and register vfio-server")
 	// ********************************************************************************
 	options := append(
 		opentracing.WithTracing(),
@@ -158,10 +157,10 @@ func main() {
 	listenOn := &(url.URL{Scheme: "unix", Path: filepath.Join(tmpDir, "listen.on")})
 	srvErrCh := grpcutils.ListenAndServe(ctx, listenOn, server)
 	exitOnErr(ctx, cancel, srvErrCh)
-	logger.Log(ctx).Infof("grpc server started")
+	log.FromContext(ctx).Infof("grpc server started")
 
 	// ********************************************************************************
-	logger.Log(ctx).Infof("executing phase 5: register nse with nsm")
+	log.FromContext(ctx).Infof("executing phase 5: register nse with nsm")
 	// ********************************************************************************
 	clientOptions := append(
 		opentracing.WithTracingDial(),
@@ -180,7 +179,7 @@ func main() {
 		clientOptions...,
 	)
 	if err != nil {
-		logger.Log(ctx).Fatalf("error establishing grpc connection to registry server %+v", err)
+		log.FromContext(ctx).Fatalf("error establishing grpc connection to registry server %+v", err)
 	}
 
 	nsRegistryClient := registry.NewNetworkServiceRegistryClient(cc)
@@ -190,7 +189,7 @@ func main() {
 			Name:    nsName,
 			Payload: payload.Ethernet,
 		}); err != nil {
-			logger.Log(ctx).Fatalf("failed to register ns(%s) %s", nsName, err.Error())
+			log.FromContext(ctx).Fatalf("failed to register ns(%s) %s", nsName, err.Error())
 		}
 	}
 
@@ -201,12 +200,12 @@ func main() {
 	)
 	nse, err := nseRegistryClient.Register(ctx, registryEndpoint(listenOn, cfg))
 	if err != nil {
-		logger.Log(ctx).Fatalf("unable to register nse %+v", err)
+		log.FromContext(ctx).Fatalf("unable to register nse %+v", err)
 	}
 	logrus.Infof("nse: %+v", nse)
 
 	// ********************************************************************************
-	logger.Log(ctx).Infof("startup completed in %v", time.Since(starttime))
+	log.FromContext(ctx).Infof("startup completed in %v", time.Since(starttime))
 	// ********************************************************************************
 
 	// wait for server to exit
@@ -217,13 +216,13 @@ func exitOnErr(ctx context.Context, cancel context.CancelFunc, errCh <-chan erro
 	// If we already have an error, log it and exit
 	select {
 	case err := <-errCh:
-		logger.Log(ctx).Fatal(err)
+		log.FromContext(ctx).Fatal(err)
 	default:
 	}
 	// Otherwise wait for an error in the background to log and cancel
 	go func(ctx context.Context, errCh <-chan error) {
 		err := <-errCh
-		logger.Log(ctx).Error(err)
+		log.FromContext(ctx).Error(err)
 		cancel()
 	}(ctx, errCh)
 }

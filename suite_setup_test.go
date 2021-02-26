@@ -104,7 +104,7 @@ func (f *TestSuite) SetupSuite() {
 	memrg := memory.NewNetworkServiceEndpointRegistryServer()
 	registryServer := registrychain.NewNetworkServiceEndpointRegistryServer(
 		setid.NewNetworkServiceEndpointRegistryServer(),
-		expire.NewNetworkServiceEndpointRegistryServer(24*time.Hour),
+		expire.NewNetworkServiceEndpointRegistryServer(f.ctx, 24*time.Hour),
 		registryrecvfd.NewNetworkServiceEndpointRegistryServer(),
 		memrg,
 	)

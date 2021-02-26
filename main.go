@@ -42,9 +42,7 @@ import (
 	"github.com/networkservicemesh/sdk/pkg/networkservice/chains/endpoint"
 	"github.com/networkservicemesh/sdk/pkg/networkservice/common/authorize"
 	"github.com/networkservicemesh/sdk/pkg/networkservice/common/mechanisms"
-	registryrefresh "github.com/networkservicemesh/sdk/pkg/registry/common/refresh"
-	registrysendfd "github.com/networkservicemesh/sdk/pkg/registry/common/sendfd"
-	registrychain "github.com/networkservicemesh/sdk/pkg/registry/core/chain"
+	registryclient "github.com/networkservicemesh/sdk/pkg/registry/chains/client"
 	"github.com/networkservicemesh/sdk/pkg/tools/debug"
 	"github.com/networkservicemesh/sdk/pkg/tools/grpcutils"
 	"github.com/networkservicemesh/sdk/pkg/tools/jaeger"
@@ -182,7 +180,7 @@ func main() {
 		log.FromContext(ctx).Fatalf("error establishing grpc connection to registry server %+v", err)
 	}
 
-	nsRegistryClient := registry.NewNetworkServiceRegistryClient(cc)
+	nsRegistryClient := registryclient.NewNetworkServiceRegistryClient(cc)
 	for i := range cfg.Services {
 		nsName := cfg.Services[i].Name
 		if _, err = nsRegistryClient.Register(ctx, &registry.NetworkService{
@@ -193,11 +191,7 @@ func main() {
 		}
 	}
 
-	nseRegistryClient := registrychain.NewNetworkServiceEndpointRegistryClient(
-		registryrefresh.NewNetworkServiceEndpointRegistryClient(),
-		registrysendfd.NewNetworkServiceEndpointRegistryClient(),
-		registry.NewNetworkServiceEndpointRegistryClient(cc),
-	)
+	nseRegistryClient := registryclient.NewNetworkServiceEndpointRegistryClient(ctx, cc)
 	nse, err := nseRegistryClient.Register(ctx, registryEndpoint(listenOn, cfg))
 	if err != nil {
 		log.FromContext(ctx).Fatalf("unable to register nse %+v", err)

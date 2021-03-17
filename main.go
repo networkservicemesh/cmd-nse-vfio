@@ -123,14 +123,14 @@ func main() {
 	// ********************************************************************************
 	log.FromContext(ctx).Infof("executing phase 3: create vfio-server network service endpoint")
 	// ********************************************************************************
-	responderEndpoint := endpoint.NewServer(
-		ctx,
-		cfg.Name,
-		authorize.NewServer(),
+	responderEndpoint := endpoint.NewServer(ctx,
 		spiffejwt.TokenGeneratorFunc(source, cfg.MaxTokenLifetime),
-		mechanisms.NewServer(map[string]networkservice.NetworkServiceServer{
-			noop.MECHANISM: mapserver.NewServer(cfg),
-		}))
+		endpoint.WithName(cfg.Name),
+		endpoint.WithAuthorizeServer(authorize.NewServer()),
+		endpoint.WithAdditionalFunctionality(
+			mechanisms.NewServer(map[string]networkservice.NetworkServiceServer{
+				noop.MECHANISM: mapserver.NewServer(cfg),
+			})))
 
 	// ********************************************************************************
 	log.FromContext(ctx).Infof("executing phase 4: create grpc server and register vfio-server")

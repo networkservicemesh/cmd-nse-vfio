@@ -26,12 +26,15 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/pkg/errors"
+
+	"github.com/networkservicemesh/api/pkg/api/networkservice/payload"
 )
 
 const (
-	addrPrefix   = "addr:"
-	vlanPrefix   = "vlan:"
-	labelsPrefix = "labels:"
+	addrPrefix    = "addr:"
+	vlanPrefix    = "vlan:"
+	labelsPrefix  = "labels:"
+	payloadPrefix = "payload:"
 )
 
 // Config holds configuration parameters from environment variables
@@ -59,13 +62,14 @@ func (c *Config) Process() error {
 type ServiceConfig struct {
 	Name    string
 	Domain  string
+	Payload string
 	MACAddr net.HardwareAddr
 	VLANTag int32
 	Labels  map[string]string
 }
 
 // UnmarshalBinary expects string(bytes) to be in format:
-// Name@Domain: { addr: MACAddr; vlan: VLANTag; labels: Labels; }
+// Name@Domain: { addr: MACAddr; vlan: VLANTag; labels: Labels; payload: Payload; }
 // MACAddr = xx:xx:xx:xx:xx:xx
 // Labels = label_1=value_1&label_2=value_2
 func (s *ServiceConfig) UnmarshalBinary(bytes []byte) (err error) {
@@ -86,6 +90,9 @@ func (s *ServiceConfig) UnmarshalBinary(bytes []byte) (err error) {
 		return errors.Errorf("invalid format: %s", text)
 	}
 
+	// Set default Payload
+	s.Payload = payload.Ethernet
+
 	split = strings.Split(split[1], "}")
 	for _, part := range strings.Split(split[0], ";") {
 		part = strings.TrimSpace(part)
@@ -96,6 +103,8 @@ func (s *ServiceConfig) UnmarshalBinary(bytes []byte) (err error) {
 			s.VLANTag, err = parseInt32(trimPrefix(part, vlanPrefix))
 		case strings.HasPrefix(part, labelsPrefix):
 			s.Labels, err = parseMap(trimPrefix(part, labelsPrefix))
+		case strings.HasPrefix(part, payloadPrefix):
+			s.Payload = trimPrefix(part, payloadPrefix)
 		default:
 			err = errors.Errorf("invalid format: %s", text)
 		}

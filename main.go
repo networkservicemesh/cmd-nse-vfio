@@ -37,7 +37,6 @@ import (
 
 	"github.com/networkservicemesh/api/pkg/api/networkservice"
 	"github.com/networkservicemesh/api/pkg/api/networkservice/mechanisms/noop"
-	"github.com/networkservicemesh/api/pkg/api/networkservice/payload"
 	"github.com/networkservicemesh/api/pkg/api/registry"
 	"github.com/networkservicemesh/sdk/pkg/networkservice/chains/endpoint"
 	"github.com/networkservicemesh/sdk/pkg/networkservice/common/authorize"
@@ -183,9 +182,10 @@ func main() {
 	nsRegistryClient := registryclient.NewNetworkServiceRegistryClient(cc)
 	for i := range cfg.Services {
 		nsName := cfg.Services[i].Name
+		nsPayload := cfg.Services[i].Payload
 		if _, err = nsRegistryClient.Register(ctx, &registry.NetworkService{
 			Name:    nsName,
-			Payload: payload.Ethernet,
+			Payload: nsPayload,
 		}); err != nil {
 			log.FromContext(ctx).Fatalf("failed to register ns(%s) %s", nsName, err.Error())
 		}

@@ -22,6 +22,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/networkservicemesh/api/pkg/api/networkservice/payload"
+
 	"github.com/networkservicemesh/cmd-nse-vfio/internal/config"
 )
 
@@ -34,6 +36,17 @@ func TestServiceConfig_UnmarshalBinary(t *testing.T) {
 	require.Equal(t, &config.ServiceConfig{
 		Name:    "pingpong",
 		Domain:  "worker.domain",
+		Payload: payload.Ethernet,
+		MACAddr: net.HardwareAddr{0x0a, 0x55, 0x44, 0x33, 0x22, 0x11},
+	}, cfg)
+
+	err = cfg.UnmarshalBinary([]byte("pingpong@worker.domain: { addr: 0a:55:44:33:22:11; payload: IP }"))
+	require.NoError(t, err)
+
+	require.Equal(t, &config.ServiceConfig{
+		Name:    "pingpong",
+		Domain:  "worker.domain",
+		Payload: payload.IP,
 		MACAddr: net.HardwareAddr{0x0a, 0x55, 0x44, 0x33, 0x22, 0x11},
 	}, cfg)
 }

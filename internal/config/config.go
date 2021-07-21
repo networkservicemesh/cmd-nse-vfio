@@ -42,7 +42,7 @@ type Config struct {
 	Name             string        `default:"vfio-server" desc:"name of VFIO Server" split_words:"true"`
 	BaseDir          string        `default:"./" desc:"base directory" split_words:"true"`
 	ConnectTo        url.URL       `default:"unix:///var/lib/networkservicemesh/nsm.io.sock" desc:"url to connect to" split_words:"true"`
-	MaxTokenLifetime time.Duration `default:"24h" desc:"maximum lifetime of tokens" split_words:"true"`
+	MaxTokenLifetime time.Duration `default:"10m" desc:"maximum lifetime of tokens" split_words:"true"`
 
 	Services []ServiceConfig `default:"" desc:"list of supported services"`
 }

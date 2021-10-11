@@ -111,7 +111,11 @@ func main() {
 	if err := cfg.Process(); err != nil {
 		logrus.Fatal(err.Error())
 	}
-	setLogLevel(cfg.LogLevel)
+	l, err := logrus.ParseLevel(cfg.LogLevel)
+	if err != nil {
+		logrus.Fatalf("invalid log level %s", cfg.LogLevel)
+	}
+	logrus.SetLevel(l)
 
 	log.FromContext(ctx).Infof("Config: %#v", cfg)
 
@@ -250,12 +254,4 @@ func registryEndpoint(listenOn *url.URL, cfg *config.Config) *registry.NetworkSe
 	}
 
 	return nse
-}
-
-func setLogLevel(level string) {
-	l, err := logrus.ParseLevel(level)
-	if err != nil {
-		logrus.Fatalf("invalid log level %s", level)
-	}
-	logrus.SetLevel(l)
 }

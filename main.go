@@ -111,6 +111,11 @@ func main() {
 	if err := cfg.Process(); err != nil {
 		logrus.Fatal(err.Error())
 	}
+	l, err := logrus.ParseLevel(cfg.LogLevel)
+	if err != nil {
+		logrus.Fatalf("invalid log level %s", cfg.LogLevel)
+	}
+	logrus.SetLevel(l)
 
 	log.FromContext(ctx).Infof("Config: %#v", cfg)
 

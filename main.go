@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Doc.ai and/or its affiliates.
+// Copyright (c) 2020-2022 Doc.ai and/or its affiliates.
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -14,6 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:build !windows
 // +build !windows
 
 package main
@@ -46,11 +47,11 @@ import (
 	registryclient "github.com/networkservicemesh/sdk/pkg/registry/chains/client"
 	"github.com/networkservicemesh/sdk/pkg/tools/debug"
 	"github.com/networkservicemesh/sdk/pkg/tools/grpcutils"
-	"github.com/networkservicemesh/sdk/pkg/tools/jaeger"
 	"github.com/networkservicemesh/sdk/pkg/tools/log"
 	"github.com/networkservicemesh/sdk/pkg/tools/log/logruslogger"
-	"github.com/networkservicemesh/sdk/pkg/tools/opentracing"
+	"github.com/networkservicemesh/sdk/pkg/tools/opentelemetry"
 	"github.com/networkservicemesh/sdk/pkg/tools/spiffejwt"
+	"github.com/networkservicemesh/sdk/pkg/tools/tracing"
 
 	"github.com/networkservicemesh/cmd-nse-vfio/internal/config"
 	"github.com/networkservicemesh/cmd-nse-vfio/internal/networkservice/mapserver"
@@ -77,19 +78,13 @@ func main() {
 	// ********************************************************************************
 	// setup logging
 	// ********************************************************************************
+	log.EnableTracing(true)
 	logrus.SetFormatter(&nested.Formatter{})
 	ctx = log.WithLog(ctx, logruslogger.New(ctx, map[string]interface{}{"cmd": os.Args[0]}))
 
 	if err := debug.Self(); err != nil {
 		log.FromContext(ctx).Infof("%s", err)
 	}
-
-	// ********************************************************************************
-	// Configure open tracing
-	// ********************************************************************************
-	log.EnableTracing(true)
-	jaegerCloser := jaeger.InitJaeger(ctx, "cmd-nse-vfio")
-	defer func() { _ = jaegerCloser.Close() }()
 
 	// enumerating phases
 	log.FromContext(ctx).Infof("there are 5 phases which will be executed followed by a success message:")
@@ -117,6 +112,21 @@ func main() {
 	logrus.SetLevel(l)
 
 	log.FromContext(ctx).Infof("Config: %#v", cfg)
+
+	// ********************************************************************************
+	// Configure Open Telemetry
+	// ********************************************************************************
+	if opentelemetry.IsEnabled() {
+		collectorAddress := cfg.OpenTelemetryCollectorURL
+		spanExporter := opentelemetry.InitSpanExporter(ctx, collectorAddress)
+		metricExporter := opentelemetry.InitMetricExporter(ctx, collectorAddress)
+		o := opentelemetry.Init(ctx, spanExporter, metricExporter, "nse-vfio")
+		defer func() {
+			if err := o.Close(); err != nil {
+				log.FromContext(ctx).Fatal(err)
+			}
+		}()
+	}
 
 	// ********************************************************************************
 	log.FromContext(ctx).Infof("executing phase 2: retrieving svid, check spire agent logs if this is the last line you see")
@@ -147,7 +157,7 @@ func main() {
 	log.FromContext(ctx).Infof("executing phase 4: create grpc server and register vfio-server")
 	// ********************************************************************************
 	options := append(
-		opentracing.WithTracing(),
+		tracing.WithTracing(),
 		grpc.Creds(
 			grpcfd.TransportCredentials(
 				credentials.NewTLS(
@@ -172,7 +182,7 @@ func main() {
 	log.FromContext(ctx).Infof("executing phase 5: register nse with nsm")
 	// ********************************************************************************
 	clientOptions := append(
-		opentracing.WithTracingDial(),
+		tracing.WithTracingDial(),
 		grpc.WithBlock(),
 		grpc.WithDefaultCallOptions(grpc.WaitForReady(true)),
 		grpc.WithTransportCredentials(

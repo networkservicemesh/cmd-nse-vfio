@@ -31,12 +31,12 @@ import (
 
 	nested "github.com/antonfisher/nested-logrus-formatter"
 	"github.com/edwarnicke/grpcfd"
-	"github.com/golang/protobuf/ptypes"
 	"github.com/sirupsen/logrus"
 	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/networkservicemesh/api/pkg/api/networkservice"
 	"github.com/networkservicemesh/api/pkg/api/networkservice/mechanisms/noop"
@@ -122,7 +122,7 @@ func main() {
 		metricExporter := opentelemetry.InitMetricExporter(ctx, collectorAddress)
 		o := opentelemetry.Init(ctx, spanExporter, metricExporter, "nse-vfio")
 		defer func() {
-			if err := o.Close(); err != nil {
+			if err = o.Close(); err != nil {
 				log.FromContext(ctx).Fatal(err)
 			}
 		}()
@@ -237,7 +237,7 @@ func exitOnErr(ctx context.Context, cancel context.CancelFunc, errCh <-chan erro
 }
 
 func registryEndpoint(listenOn *url.URL, cfg *config.Config) *registry.NetworkServiceEndpoint {
-	expireTime, _ := ptypes.TimestampProto(time.Now().Add(cfg.MaxTokenLifetime))
+	expireTime := timestamppb.New(time.Now().Add(cfg.MaxTokenLifetime))
 
 	nse := &registry.NetworkServiceEndpoint{
 		Name:                 cfg.Name,

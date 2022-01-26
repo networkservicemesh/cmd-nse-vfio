@@ -18,6 +18,7 @@ import (
 	_ "github.com/networkservicemesh/sdk/pkg/networkservice/common/mechanisms"
 	_ "github.com/networkservicemesh/sdk/pkg/networkservice/core/next"
 	_ "github.com/networkservicemesh/sdk/pkg/registry/chains/client"
+	_ "github.com/networkservicemesh/sdk/pkg/registry/common/begin"
 	_ "github.com/networkservicemesh/sdk/pkg/registry/common/expire"
 	_ "github.com/networkservicemesh/sdk/pkg/registry/common/memory"
 	_ "github.com/networkservicemesh/sdk/pkg/registry/common/recvfd"

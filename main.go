@@ -45,6 +45,7 @@ import (
 	"github.com/networkservicemesh/sdk/pkg/networkservice/common/authorize"
 	"github.com/networkservicemesh/sdk/pkg/networkservice/common/mechanisms"
 	registryclient "github.com/networkservicemesh/sdk/pkg/registry/chains/client"
+	"github.com/networkservicemesh/sdk/pkg/registry/common/sendfd"
 	"github.com/networkservicemesh/sdk/pkg/tools/debug"
 	"github.com/networkservicemesh/sdk/pkg/tools/grpcutils"
 	"github.com/networkservicemesh/sdk/pkg/tools/log"
@@ -206,7 +207,14 @@ func main() {
 		}
 	}
 
-	nseRegistryClient := registryclient.NewNetworkServiceEndpointRegistryClient(ctx, &cfg.ConnectTo, registryclient.WithDialOptions(clientOptions...))
+	nseRegistryClient := registryclient.NewNetworkServiceEndpointRegistryClient(
+		ctx,
+		&cfg.ConnectTo,
+		registryclient.WithDialOptions(clientOptions...),
+		registryclient.WithNSEAdditionalFunctionality(
+			sendfd.NewNetworkServiceEndpointRegistryClient(),
+		),
+	)
 	nse, err := nseRegistryClient.Register(ctx, registryEndpoint(listenOn, cfg))
 	if err != nil {
 		log.FromContext(ctx).Fatalf("unable to register nse %+v", err)

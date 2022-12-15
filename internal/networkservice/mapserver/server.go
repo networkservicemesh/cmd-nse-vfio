@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021 Doc.ai and/or its affiliates.
+// Copyright (c) 2020-2022 Doc.ai and/or its affiliates.
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -42,11 +42,11 @@ type entry struct {
 // NewServer returns a new `network service -> { MAC, VLAN }` mapping server chain element
 func NewServer(cfg *config.Config) networkservice.NetworkServiceServer {
 	s := &mapServer{
-		entries: make(map[string]*entry, len(cfg.Services)),
+		entries: make(map[string]*entry, len(cfg.ServiceNames)),
 	}
 
-	for i := range cfg.Services {
-		service := &cfg.Services[i]
+	for i := range cfg.ServiceNames {
+		service := &cfg.ServiceNames[i]
 		s.entries[service.Name] = &entry{
 			macAddr: service.MACAddr,
 			vlanTag: service.VLANTag,

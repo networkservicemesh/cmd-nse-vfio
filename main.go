@@ -208,18 +208,20 @@ func main() {
 		grpcfd.WithChainUnaryInterceptor(),
 	)
 
-	nsRegistryClient := registryclient.NewNetworkServiceRegistryClient(ctx,
-		registryclient.WithClientURL(&cfg.ConnectTo),
-		registryclient.WithDialOptions(clientOptions...),
-		registryclient.WithAuthorizeNSRegistryClient(registryauthorize.NewNetworkServiceRegistryClient()))
-	for i := range cfg.Services {
-		nsName := cfg.Services[i].Name
-		nsPayload := cfg.Services[i].Payload
-		if _, err = nsRegistryClient.Register(ctx, &registry.NetworkService{
-			Name:    nsName,
-			Payload: nsPayload,
-		}); err != nil {
-			log.FromContext(ctx).Fatalf("failed to register ns(%s) %s", nsName, err.Error())
+	if cfg.RegisterService {
+		nsRegistryClient := registryclient.NewNetworkServiceRegistryClient(ctx,
+			registryclient.WithClientURL(&cfg.ConnectTo),
+			registryclient.WithDialOptions(clientOptions...),
+			registryclient.WithAuthorizeNSRegistryClient(registryauthorize.NewNetworkServiceRegistryClient()))
+		for i := range cfg.ServiceNames {
+			nsName := cfg.ServiceNames[i].Name
+			nsPayload := cfg.ServiceNames[i].Payload
+			if _, err = nsRegistryClient.Register(ctx, &registry.NetworkService{
+				Name:    nsName,
+				Payload: nsPayload,
+			}); err != nil {
+				log.FromContext(ctx).Fatalf("failed to register ns(%s) %s", nsName, err.Error())
+			}
 		}
 	}
 
@@ -267,14 +269,14 @@ func registryEndpoint(listenOn *url.URL, cfg *config.Config) *registry.NetworkSe
 
 	nse := &registry.NetworkServiceEndpoint{
 		Name:                 cfg.Name,
-		NetworkServiceNames:  make([]string, len(cfg.Services)),
-		NetworkServiceLabels: make(map[string]*registry.NetworkServiceLabels, len(cfg.Services)),
+		NetworkServiceNames:  make([]string, len(cfg.ServiceNames)),
+		NetworkServiceLabels: make(map[string]*registry.NetworkServiceLabels, len(cfg.ServiceNames)),
 		Url:                  grpcutils.URLToTarget(listenOn),
 		ExpirationTime:       expireTime,
 	}
 
-	for i := range cfg.Services {
-		service := &cfg.Services[i]
+	for i := range cfg.ServiceNames {
+		service := &cfg.ServiceNames[i]
 
 		labels := service.Labels
 		if labels == nil {

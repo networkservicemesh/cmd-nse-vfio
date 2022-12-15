@@ -46,7 +46,8 @@ type Config struct {
 	LogLevel              string        `default:"INFO" desc:"Log level" split_words:"true"`
 	OpenTelemetryEndpoint string        `default:"otel-collector.observability.svc.cluster.local:4317" desc:"OpenTelemetry Collector Endpoint"`
 
-	Services []ServiceConfig `default:"" desc:"list of supported services"`
+	ServiceNames    []ServiceConfig `default:"" desc:"list of supported services" split_words:"true"`
+	RegisterService bool            `default:"true" desc:"if true then registers network service on startup" split_words:"true"`
 }
 
 // Process prints and processes env to config

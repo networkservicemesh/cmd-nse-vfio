@@ -212,7 +212,8 @@ func main() {
 		nsRegistryClient := registryclient.NewNetworkServiceRegistryClient(ctx,
 			registryclient.WithClientURL(&cfg.ConnectTo),
 			registryclient.WithDialOptions(clientOptions...),
-			registryclient.WithAuthorizeNSRegistryClient(registryauthorize.NewNetworkServiceRegistryClient()))
+			registryclient.WithAuthorizeNSRegistryClient(registryauthorize.NewNetworkServiceRegistryClient(
+				registryauthorize.WithPolicies(cfg.RegistryClientPolicies...))))
 		for i := range cfg.ServiceNames {
 			nsName := cfg.ServiceNames[i].Name
 			nsPayload := cfg.ServiceNames[i].Payload
@@ -233,7 +234,8 @@ func main() {
 			clientinfo.NewNetworkServiceEndpointRegistryClient(),
 			sendfd.NewNetworkServiceEndpointRegistryClient(),
 		),
-		registryclient.WithAuthorizeNSERegistryClient(registryauthorize.NewNetworkServiceEndpointRegistryClient()),
+		registryclient.WithAuthorizeNSERegistryClient(registryauthorize.NewNetworkServiceEndpointRegistryClient(
+			registryauthorize.WithPolicies(cfg.RegistryClientPolicies...))),
 	)
 	nse, err := nseRegistryClient.Register(ctx, registryEndpoint(listenOn, cfg))
 	if err != nil {

@@ -39,12 +39,13 @@ const (
 
 // Config holds configuration parameters from environment variables
 type Config struct {
-	Name                  string        `default:"vfio-server" desc:"name of VFIO Server" split_words:"true"`
-	BaseDir               string        `default:"./" desc:"base directory" split_words:"true"`
-	ConnectTo             url.URL       `default:"unix:///var/lib/networkservicemesh/nsm.io.sock" desc:"url to connect to" split_words:"true"`
-	MaxTokenLifetime      time.Duration `default:"10m" desc:"maximum lifetime of tokens" split_words:"true"`
-	LogLevel              string        `default:"INFO" desc:"Log level" split_words:"true"`
-	OpenTelemetryEndpoint string        `default:"otel-collector.observability.svc.cluster.local:4317" desc:"OpenTelemetry Collector Endpoint"`
+	Name                   string        `default:"vfio-server" desc:"name of VFIO Server" split_words:"true"`
+	BaseDir                string        `default:"./" desc:"base directory" split_words:"true"`
+	ConnectTo              url.URL       `default:"unix:///var/lib/networkservicemesh/nsm.io.sock" desc:"url to connect to" split_words:"true"`
+	MaxTokenLifetime       time.Duration `default:"10m" desc:"maximum lifetime of tokens" split_words:"true"`
+	RegistryClientPolicies []string      `default:"etc/nsm/opa/common/.*.rego,etc/nsm/opa/registry/.*.rego,etc/nsm/opa/client/.*.rego" desc:"paths to files and directories that contain registry client policies" split_words:"true"`
+	LogLevel               string        `default:"INFO" desc:"Log level" split_words:"true"`
+	OpenTelemetryEndpoint  string        `default:"otel-collector.observability.svc.cluster.local:4317" desc:"OpenTelemetry Collector Endpoint"`
 
 	ServiceNames    []ServiceConfig `default:"" desc:"list of supported services" split_words:"true"`
 	RegisterService bool            `default:"true" desc:"if true then registers network service on startup" split_words:"true"`

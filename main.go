@@ -1,5 +1,7 @@
 // Copyright (c) 2020-2022 Doc.ai and/or its affiliates.
 //
+// Copyright (c) 2023 Cisco and/or its affiliates.
+//
 // SPDX-License-Identifier: Apache-2.0
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,6 +47,7 @@ import (
 	"github.com/networkservicemesh/sdk/pkg/networkservice/chains/endpoint"
 	"github.com/networkservicemesh/sdk/pkg/networkservice/common/authorize"
 	"github.com/networkservicemesh/sdk/pkg/networkservice/common/mechanisms"
+	"github.com/networkservicemesh/sdk/pkg/networkservice/ipam/groupipam"
 	registryclient "github.com/networkservicemesh/sdk/pkg/registry/chains/client"
 	registryauthorize "github.com/networkservicemesh/sdk/pkg/registry/common/authorize"
 	"github.com/networkservicemesh/sdk/pkg/registry/common/clientinfo"
@@ -60,10 +63,6 @@ import (
 
 	"github.com/networkservicemesh/cmd-nse-vfio/internal/config"
 	"github.com/networkservicemesh/cmd-nse-vfio/internal/networkservice/mapserver"
-)
-
-const (
-	serviceDomainLabel = "serviceDomain"
 )
 
 func main() {
@@ -96,7 +95,7 @@ func main() {
 	log.FromContext(ctx).Infof("the phases include:")
 	log.FromContext(ctx).Infof("1: get config from environment")
 	log.FromContext(ctx).Infof("2: retrieve spiffe svid")
-	log.FromContext(ctx).Infof("3: create vfio server nse")
+	log.FromContext(ctx).Infof("3: create noop server nse")
 	log.FromContext(ctx).Infof("4: create grpc and mount nse")
 	log.FromContext(ctx).Infof("5: register nse with nsm")
 	log.FromContext(ctx).Infof("a final success message with start time duration")
@@ -152,19 +151,21 @@ func main() {
 	tlsServerConfig.MinVersion = tls.VersionTLS12
 
 	// ********************************************************************************
-	log.FromContext(ctx).Infof("executing phase 3: create vfio-server network service endpoint")
+	log.FromContext(ctx).Infof("executing phase 3: create noop-server network service endpoint")
 	// ********************************************************************************
 	responderEndpoint := endpoint.NewServer(ctx,
 		spiffejwt.TokenGeneratorFunc(source, cfg.MaxTokenLifetime),
 		endpoint.WithName(cfg.Name),
 		endpoint.WithAuthorizeServer(authorize.NewServer()),
 		endpoint.WithAdditionalFunctionality(
+			groupipam.NewServer(cfg.CidrPrefix),
 			mechanisms.NewServer(map[string]networkservice.NetworkServiceServer{
 				noop.MECHANISM: mapserver.NewServer(cfg),
-			})))
+			}),
+		))
 
 	// ********************************************************************************
-	log.FromContext(ctx).Infof("executing phase 4: create grpc server and register vfio-server")
+	log.FromContext(ctx).Infof("executing phase 4: create grpc server and register noop-server")
 	// ********************************************************************************
 	options := append(
 		tracing.WithTracing(),
@@ -216,10 +217,9 @@ func main() {
 				registryauthorize.WithPolicies(cfg.RegistryClientPolicies...))))
 		for i := range cfg.ServiceNames {
 			nsName := cfg.ServiceNames[i].Name
-			nsPayload := cfg.ServiceNames[i].Payload
 			if _, err = nsRegistryClient.Register(ctx, &registry.NetworkService{
 				Name:    nsName,
-				Payload: nsPayload,
+				Payload: cfg.Payload,
 			}); err != nil {
 				log.FromContext(ctx).Fatalf("failed to register ns(%s) %s", nsName, err.Error())
 			}
@@ -280,15 +280,9 @@ func registryEndpoint(listenOn *url.URL, cfg *config.Config) *registry.NetworkSe
 	for i := range cfg.ServiceNames {
 		service := &cfg.ServiceNames[i]
 
-		labels := service.Labels
-		if labels == nil {
-			labels = make(map[string]string, 1)
-		}
-		labels[serviceDomainLabel] = service.Domain
-
 		nse.NetworkServiceNames[i] = service.Name
 		nse.NetworkServiceLabels[service.Name] = &registry.NetworkServiceLabels{
-			Labels: labels,
+			Labels: cfg.Labels,
 		}
 	}
 

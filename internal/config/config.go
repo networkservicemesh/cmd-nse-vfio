@@ -1,5 +1,7 @@
 // Copyright (c) 2020-2022 Doc.ai and/or its affiliates.
 //
+// Copyright (c) 2023 Cisco and/or its affiliates.
+//
 // SPDX-License-Identifier: Apache-2.0
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,25 +29,26 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"github.com/pkg/errors"
 
-	"github.com/networkservicemesh/api/pkg/api/networkservice/payload"
+	"github.com/networkservicemesh/sdk/pkg/tools/cidr"
 )
 
 const (
-	addrPrefix    = "addr:"
-	vlanPrefix    = "vlan:"
-	labelsPrefix  = "labels:"
-	payloadPrefix = "payload:"
+	addrPrefix = "addr:"
+	vlanPrefix = "vlan:"
 )
 
 // Config holds configuration parameters from environment variables
 type Config struct {
-	Name                   string        `default:"vfio-server" desc:"name of VFIO Server" split_words:"true"`
-	BaseDir                string        `default:"./" desc:"base directory" split_words:"true"`
-	ConnectTo              url.URL       `default:"unix:///var/lib/networkservicemesh/nsm.io.sock" desc:"url to connect to" split_words:"true"`
-	MaxTokenLifetime       time.Duration `default:"10m" desc:"maximum lifetime of tokens" split_words:"true"`
-	RegistryClientPolicies []string      `default:"etc/nsm/opa/common/.*.rego,etc/nsm/opa/registry/.*.rego,etc/nsm/opa/client/.*.rego" desc:"paths to files and directories that contain registry client policies" split_words:"true"`
-	LogLevel               string        `default:"INFO" desc:"Log level" split_words:"true"`
-	OpenTelemetryEndpoint  string        `default:"otel-collector.observability.svc.cluster.local:4317" desc:"OpenTelemetry Collector Endpoint"`
+	Name                   string            `default:"vfio-server" desc:"name of VFIO Server" split_words:"true"`
+	BaseDir                string            `default:"./" desc:"base directory" split_words:"true"`
+	ConnectTo              url.URL           `default:"unix:///var/lib/networkservicemesh/nsm.io.sock" desc:"url to connect to" split_words:"true"`
+	MaxTokenLifetime       time.Duration     `default:"10m" desc:"maximum lifetime of tokens" split_words:"true"`
+	RegistryClientPolicies []string          `default:"etc/nsm/opa/common/.*.rego,etc/nsm/opa/registry/.*.rego,etc/nsm/opa/client/.*.rego" desc:"paths to files and directories that contain registry client policies" split_words:"true"`
+	LogLevel               string            `default:"INFO" desc:"Log level" split_words:"true"`
+	OpenTelemetryEndpoint  string            `default:"otel-collector.observability.svc.cluster.local:4317" desc:"OpenTelemetry Collector Endpoint"`
+	CidrPrefix             cidr.Groups       `default:"169.254.0.0/16" desc:"List of CIDR Prefix to assign IPv4 and IPv6 addresses from" split_words:"true"`
+	Labels                 map[string]string `default:"" desc:"Endpoint labels"`
+	Payload                string            `default:"ETHERNET" desc:"Name of provided service payload" split_words:"true"`
 
 	ServiceNames    []ServiceConfig `default:"" desc:"list of supported services" split_words:"true"`
 	RegisterService bool            `default:"true" desc:"if true then registers network service on startup" split_words:"true"`
@@ -65,37 +68,23 @@ func (c *Config) Process() error {
 // ServiceConfig is a per-service config
 type ServiceConfig struct {
 	Name    string
-	Domain  string
-	Payload string
 	MACAddr net.HardwareAddr
 	VLANTag int32
-	Labels  map[string]string
 }
 
 // UnmarshalBinary expects string(bytes) to be in format:
-// Name@Domain: { addr: MACAddr; vlan: VLANTag; labels: Labels; payload: Payload; }
+// Name: { addr: MACAddr; vlan: VLANTag; }
 // MACAddr = xx:xx:xx:xx:xx:xx
-// Labels = label_1=value_1&label_2=value_2
 func (s *ServiceConfig) UnmarshalBinary(bytes []byte) (err error) {
 	text := string(bytes)
 
-	split := strings.Split(text, "@")
+	split := strings.Split(text, ":")
 	s.Name = strings.TrimSpace(split[0])
-
-	if len(split) < 2 {
-		return errors.Errorf("invalid format: %s", text)
-	}
-
-	split = strings.Split(split[1], ":")
-	s.Domain = strings.TrimSpace(split[0])
 
 	split = strings.Split(text, "{")
 	if len(split) < 2 {
 		return errors.Errorf("invalid format: %s", text)
 	}
-
-	// Set default Payload
-	s.Payload = payload.Ethernet
 
 	split = strings.Split(split[1], "}")
 	for _, part := range strings.Split(split[0], ";") {
@@ -105,10 +94,6 @@ func (s *ServiceConfig) UnmarshalBinary(bytes []byte) (err error) {
 			s.MACAddr, err = net.ParseMAC(trimPrefix(part, addrPrefix))
 		case strings.HasPrefix(part, vlanPrefix):
 			s.VLANTag, err = parseInt32(trimPrefix(part, vlanPrefix))
-		case strings.HasPrefix(part, labelsPrefix):
-			s.Labels, err = parseMap(trimPrefix(part, labelsPrefix))
-		case strings.HasPrefix(part, payloadPrefix):
-			s.Payload = trimPrefix(part, payloadPrefix)
 		default:
 			err = errors.Errorf("invalid format: %s", text)
 		}
@@ -133,27 +118,9 @@ func parseInt32(s string) (int32, error) {
 	return int32(i), nil
 }
 
-func parseMap(s string) (map[string]string, error) {
-	m := make(map[string]string)
-	for _, keyValue := range strings.Split(s, "&") {
-		split := strings.Split(keyValue, "=")
-		if len(split) != 2 {
-			return nil, errors.Errorf("invalid key-value pair: %s", keyValue)
-		}
-		m[split[0]] = split[1]
-	}
-	return m, nil
-}
-
 func (s *ServiceConfig) validate() error {
 	if s.Name == "" {
 		return errors.New("name is empty")
-	}
-	if s.Domain == "" {
-		return errors.New("domain is empty")
-	}
-	if s.MACAddr.String() == "" {
-		return errors.New("MAC address is empty")
 	}
 	return nil
 }

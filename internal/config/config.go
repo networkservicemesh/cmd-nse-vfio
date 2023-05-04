@@ -83,7 +83,7 @@ func (s *ServiceConfig) UnmarshalBinary(bytes []byte) (err error) {
 
 	split = strings.Split(text, "{")
 	if len(split) < 2 {
-		return errors.Errorf("invalid format: %s", text)
+		return s.validate()
 	}
 
 	split = strings.Split(split[1], "}")

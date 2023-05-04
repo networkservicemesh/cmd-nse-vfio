@@ -45,4 +45,12 @@ func TestServiceConfig_UnmarshalBinary(t *testing.T) {
 		Name:    "pingpong",
 		VLANTag: 1111,
 	}, cfg)
+
+	cfg = new(config.ServiceConfig)
+	err = cfg.UnmarshalBinary([]byte("pingpong"))
+	require.NoError(t, err)
+
+	require.Equal(t, &config.ServiceConfig{
+		Name: "pingpong",
+	}, cfg)
 }

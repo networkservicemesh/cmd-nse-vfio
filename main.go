@@ -24,7 +24,6 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"os/signal"
@@ -179,7 +178,7 @@ func main() {
 	)
 	server := grpc.NewServer(options...)
 	responderEndpoint.Register(server)
-	tmpDir, err := ioutil.TempDir("", cfg.Name)
+	tmpDir, err := os.MkdirTemp("", cfg.Name)
 	if err != nil {
 		logrus.Fatalf("error creating tmpDir %+v", err)
 	}

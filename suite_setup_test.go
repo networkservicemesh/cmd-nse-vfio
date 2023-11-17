@@ -67,7 +67,7 @@ func (f *TestSuite) SetupSuite() {
 	f.Require().NoError(err)
 	f.spireErrCh = spire.Start(
 		spire.WithContext(f.ctx),
-		spire.WithEntry("spiffe://example.org/app", "unix:path:/bin/app"),
+		spire.WithEntry("spiffe://example.org/app", "unix:path:/usr/bin/app"),
 		spire.WithEntry(fmt.Sprintf("spiffe://example.org/%s", filepath.Base(executable)),
 			fmt.Sprintf("unix:path:%s", executable),
 		),

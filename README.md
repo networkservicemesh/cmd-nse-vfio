@@ -9,11 +9,11 @@ This README will provide directions for building, testing, and debugging that co
 
 `cmd-nse-vfio` accept following environment variables:
 
-* NSE_NAME - A string value of network service endpoint name (default "vfio-server")
-* NSE_BASE_DIR - A base directory to create a unix socker for listening incoming requests (default "./")
-* NSE_CONNECT_TO - A Network service Manager connectTo URL (default "unix:///var/lib/networkservicemesh/nsm.io.sock")
-* NSE_MAX_TOKEN_LIFETIME - A token lifetime duration (default 24h)
-* NSE_SERVICES - A list of supported Network Services in inner format:
+* `NSM_NAME` - A string value of network service endpoint name (default "vfio-server")
+* `NSM_BASE_DIR` - A base directory to create a unix socker for listening incoming requests (default "./")
+* `NSM_CONNECT_TO` - A Network service Manager connectTo URL (default "unix:///var/lib/networkservicemesh/nsm.io.sock")
+* `NSM_MAX_TOKEN_LIFETIME` - A token lifetime duration (default 24h)
+* `NSM_SERVICE_NAMES` - A list of supported Network Services in inner format:
     Name@Domain: { addr: MACAddr; vlan: VLANTag; labels: Labels; }
     MACAddr = xx:xx:xx:xx:xx:xx
     Labels = label_1=value_1&label_2=value_2
@@ -27,6 +27,15 @@ This README will provide directions for building, testing, and debugging that co
             - **pingpong** Network Service
             - **worker.domain** Network Service domain
             - **0a:55:44:33:22:11** MAC address
+* `NSM_CIDR_PREFIX`              - List of CIDR Prefix to assign IPv4 and IPv6 addresses from (default: "169.254.0.0/16")
+* `NSM_LABELS`                   - Endpoint labels
+* `NSM_LOG_LEVEL`                - Log level (default: "INFO")
+* `NSM_METRICS_EXPORT_INTERVAL`  - interval between mertics exports (default: "10s")
+* `NSM_OPEN_TELEMETRY_ENDPOINT`  - OpenTelemetry Collector Endpoint (default: "otel-collector.observability.svc.cluster.local:4317")
+* `NSM_PAYLOAD`                  - Name of provided service payload (default: "ETHERNET")
+* `NSM_REGISTER_SERVICE`         - if true then registers network service on startup (default: "true")
+* `NSM_REGISTRY_CLIENT_POLICIES` - paths to files and directories that contain registry client policies (default: "etc/nsm/opa/common/.*.rego,etc/nsm/opa/registry/.*.rego,etc/nsm/opa/client/.*.rego")
+
 
 # Build
 

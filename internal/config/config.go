@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2022 Doc.ai and/or its affiliates.
 //
-// Copyright (c) 2023 Cisco and/or its affiliates.
+// Copyright (c) 2023-2024 Cisco and/or its affiliates.
 //
 // Copyright (c) 2024 OpenInfra Foundation Europe. All rights reserved.
 //
@@ -52,6 +52,8 @@ type Config struct {
 	CidrPrefix             cidr.Groups       `default:"169.254.0.0/16" desc:"List of CIDR Prefix to assign IPv4 and IPv6 addresses from" split_words:"true"`
 	Labels                 map[string]string `default:"" desc:"Endpoint labels"`
 	Payload                string            `default:"ETHERNET" desc:"Name of provided service payload" split_words:"true"`
+	PprofEnabled           bool              `default:"false" desc:"is pprof enabled" split_words:"true"`
+	PprofListenOn          string            `default:"localhost:6060" desc:"pprof URL to ListenAndServe" split_words:"true"`
 
 	ServiceNames    []ServiceConfig `default:"" desc:"list of supported services" split_words:"true"`
 	RegisterService bool            `default:"true" desc:"if true then registers network service on startup" split_words:"true"`

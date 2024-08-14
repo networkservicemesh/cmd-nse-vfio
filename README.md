@@ -35,6 +35,8 @@ This README will provide directions for building, testing, and debugging that co
 * `NSM_PAYLOAD`                  - Name of provided service payload (default: "ETHERNET")
 * `NSM_REGISTER_SERVICE`         - if true then registers network service on startup (default: "true")
 * `NSM_REGISTRY_CLIENT_POLICIES` - paths to files and directories that contain registry client policies (default: "etc/nsm/opa/common/.*.rego,etc/nsm/opa/registry/.*.rego,etc/nsm/opa/client/.*.rego")
+* `NSM_PPROF_ENABLED`            - is pprof enabled (default: "false")
+* `NSM_PPROF_LISTEN_ON`          - pprof URL to ListenAndServe (default: "localhost:6060")
 
 
 # Build

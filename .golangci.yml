@@ -77,9 +77,6 @@ linters-settings:
     simple: true
     range-loops: true
     for-loops: false
-  gosec:
-    excludes:
-      - G115
   gocritic:
     enabled-checks:
       - appendCombine
@@ -162,3 +159,7 @@ issues:
       linters:
         - funlen
       text: "Function 'SetupSuite' is too long"
+    - path: internal/config/config.go
+      linters:
+        - gosec
+      text: "G115: integer overflow conversion int64 -> int32"
